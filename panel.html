@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mindwell — Therapist Panel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500&family=Nunito:wght@400;500;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Nunito', sans-serif; background: #fdf6ee; min-height: 100vh; padding: 1.5rem; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+  .header h1 { font-family: 'Lora', serif; font-size: 22px; color: #5c3d2e; font-weight: 500; }
+  .header h1 span { color: #c4956a; }
+  .header p { font-size: 13px; color: #9b7b68; margin-top: 2px; }
+  .badge { background: #c4956a; color: #fff; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; }
+  .layout { display: grid; grid-template-columns: 260px 1fr; gap: 1rem; height: calc(100vh - 120px); min-height: 500px; }
+  .sidebar { background: #fffaf5; border-radius: 16px; border: 1px solid #e8d8c8; overflow: hidden; display: flex; flex-direction: column; }
+  .sidebar-header { padding: 14px 16px; border-bottom: 1px solid #e8d8c8; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #c4956a; display: flex; align-items: center; justify-content: space-between; }
+  .refresh-btn { background: none; border: none; cursor: pointer; color: #c4956a; font-size: 16px; padding: 2px 6px; border-radius: 6px; transition: background 0.15s; }
+  .refresh-btn:hover { background: #f5e6d8; }
+  .sessions-list { flex: 1; overflow-y: auto; padding: 8px; }
+  .session-item { padding: 12px; border-radius: 10px; cursor: pointer; margin-bottom: 4px; border: 1.5px solid transparent; transition: all 0.15s; }
+  .session-item:hover { background: #f5e6d8; }
+  .session-item.active { background: #f5e6d8; border-color: #c4956a; }
+  .session-item .s-name { font-weight: 600; font-size: 14px; color: #5c3d2e; margin-bottom: 3px; }
+  .session-item .s-problem { font-size: 12px; color: #9b7b68; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+  .session-item .s-time { font-size: 11px; color: #c4956a; margin-top: 4px; }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .status-dot.waiting { background: #e8a84a; }
+  .status-dot.active { background: #5bad74; }
+  .main { background: #fffaf5; border-radius: 16px; border: 1px solid #e8d8c8; display: flex; flex-direction: column; overflow: hidden; }
+  .main-header { padding: 16px 20px; border-bottom: 1px solid #e8d8c8; display: flex; align-items: flex-start; gap: 16px; }
+  .client-avatar { width: 44px; height: 44px; border-radius: 50%; background: #f0e0d0; display: flex; align-items: center; justify-content: center; font-family: 'Lora', serif; font-size: 18px; color: #c4956a; flex-shrink: 0; }
+  .client-info h2 { font-family: 'Lora', serif; font-size: 18px; color: #5c3d2e; font-weight: 500; }
+  .client-info p { font-size: 13px; color: #9b7b68; margin-top: 2px; }
+  .problem-box { background: #fff3e8; border: 1px solid #e8d8c8; border-radius: 10px; padding: 12px 16px; margin: 12px 20px; }
+  .problem-box .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #c4956a; margin-bottom: 4px; }
+  .problem-box p { font-size: 14px; color: #5c3d2e; line-height: 1.6; }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 75%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
+  .msg.client { background: #e8d8c8; color: #5c3d2e; align-self: flex-start; border-bottom-left-radius: 4px; }
+  .msg.therapist { background: #c4956a; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+  .msg-sender { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 3px; opacity: 0.65; }
+  .msg-time { font-size: 10px; margin-top: 4px; opacity: 0.5; text-align: right; }
+  .reply-area { padding: 14px 20px; border-top: 1px solid #e8d8c8; display: flex; gap: 10px; align-items: flex-end; }
+  .reply-area textarea { flex: 1; background: #fff8f2; border: 1.5px solid #e0c8b0; border-radius: 12px; padding: 12px 14px; font-family: 'Nunito', sans-serif; font-size: 14px; color: #5c3d2e; resize: none; outline: none; height: 50px; transition: border-color 0.2s; }
+  .reply-area textarea:focus { border-color: #c4956a; }
+  .send-btn { background: #c4956a; border: none; border-radius: 12px; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
+  .send-btn:hover { background: #b07d56; }
+  .send-btn svg { width: 20px; height: 20px; fill: #fff; }
+  .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #c4a080; gap: 12px; }
+  .empty-state .icon { font-size: 40px; }
+  .empty-state p { font-size: 14px; }
+  .no-sessions { padding: 24px 16px; text-align: center; color: #c4a080; font-size: 13px; line-height: 1.6; }
+  .login-screen { max-width: 360px; margin: 4rem auto; background: #fffaf5; border-radius: 20px; border: 1px solid #e8d8c8; padding: 2rem; text-align: center; }
+  .login-screen h2 { font-family: 'Lora', serif; font-size: 22px; color: #5c3d2e; font-weight: 500; margin-bottom: 8px; }
+  .login-screen p { font-size: 14px; color: #9b7b68; margin-bottom: 1.5rem; }
+  .login-screen input { width: 100%; background: #fff8f2; border: 1.5px solid #e0c8b0; border-radius: 12px; padding: 12px 16px; font-family: 'Nunito', sans-serif; font-size: 15px; color: #5c3d2e; outline: none; margin-bottom: 1rem; transition: border-color 0.2s; }
+  .login-screen input:focus { border-color: #c4956a; }
+  .login-btn { width: 100%; padding: 13px; background: #c4956a; color: #fff; border: none; border-radius: 12px; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+  .login-btn:hover { background: #b07d56; }
+  .err { color: #c04a4a; font-size: 13px; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<div id="loginScreen" class="login-screen">
+  <div style="font-size: 32px; margin-bottom: 12px;">&#x1F511;</div>
+  <h2>mind<span style="color:#c4956a;">well</span></h2>
+  <p>Therapist panel — private access only.</p>
+  <input type="password" id="passInput" placeholder="Password..." onkeydown="if(event.key==='Enter')login()" />
+  <button class="login-btn" onclick="login()">Enter panel</button>
+  <div class="err" id="loginErr"></div>
+</div>
+
+<div id="panel" style="display:none;">
+  <div class="header">
+    <div>
+      <h1>mind<span>well</span> — Therapist Panel</h1>
+      <p>Your private dashboard. All client sessions appear here.</p>
+    </div>
+    <span class="badge" id="countBadge">0 sessions</span>
+  </div>
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        Sessions
+        <button class="refresh-btn" onclick="loadSessions()" title="Refresh">&#x21bb;</button>
+      </div>
+      <div class="sessions-list" id="sessionsList">
+        <div class="no-sessions">No sessions yet.<br>Clients will appear here once they fill in the form.</div>
+      </div>
+    </div>
+    <div class="main" id="mainPanel">
+      <div class="empty-state">
+        <div class="icon">&#x1F49B;</div>
+        <p>Select a session from the left to begin chatting</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'therapy_sessions';
+  const PASSWORD = 'mindwell2024';
+  let currentSessionId = null;
+
+  function login() {
+    const p = document.getElementById('passInput').value;
+    if (p === PASSWORD) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('panel').style.display = 'block';
+      loadSessions();
+      setInterval(loadSessions, 3000);
+    } else {
+      document.getElementById('loginErr').textContent = 'Incorrect password. Try again.';
+    }
+  }
+
+  function loadSessions() {
+    try {
+      const sessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      const list = document.getElementById('sessionsList');
+      const badge = document.getElementById('countBadge');
+      badge.textContent = sessions.length + ' session' + (sessions.length !== 1 ? 's' : '');
+      if (sessions.length === 0) { list.innerHTML = '<div class="no-sessions">No sessions yet.<br>Clients will appear here once they fill in the form.</div>'; return; }
+      list.innerHTML = '';
+      sessions.slice().reverse().forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'session-item' + (s.id === currentSessionId ? ' active' : '');
+        div.onclick = () => openSession(s.id, div);
+        const hasClientMsgs = s.messages && s.messages.some(m => m.from === 'client');
+        div.innerHTML = `<div class="s-name"><span class="status-dot ${hasClientMsgs ? 'active' : 'waiting'}"></span>${s.name}</div><div class="s-problem">${s.problem}</div><div class="s-time">${s.timestamp}</div>`;
+        list.appendChild(div);
+      });
+      if (currentSessionId) refreshChat(currentSessionId);
+    } catch(e) {}
+  }
+
+  function openSession(id, el) {
+    currentSessionId = id;
+    document.querySelectorAll('.session-item').forEach(e => e.classList.remove('active'));
+    if (el) el.classList.add('active');
+    try {
+      const sessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      const s = sessions.find(s => s.id === id);
+      if (!s) return;
+      const main = document.getElementById('mainPanel');
+      main.innerHTML = `
+        <div class="main-header">
+          <div class="client-avatar">${s.name.charAt(0).toUpperCase()}</div>
+          <div class="client-info"><h2>${s.name}</h2><p>${s.email} &nbsp;·&nbsp; ${s.timestamp}</p></div>
+        </div>
+        <div class="problem-box"><div class="label">What they shared</div><p>${s.problem}</p></div>
+        <div class="chat-messages" id="chatMessages">${renderMessages(s.messages || [])}</div>
+        <div class="reply-area">
+          <textarea id="replyInput" placeholder="Type your reply..." onkeydown="replyEnter(event)"></textarea>
+          <button class="send-btn" onclick="sendReply()"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></button>
+        </div>`;
+      scrollChat();
+    } catch(e) {}
+  }
+
+  function renderMessages(messages) {
+    if (!messages.length) return '<p style="text-align:center;color:#c4a080;font-size:13px;padding:1rem;">No messages yet — the client may still be in the waiting room.</p>';
+    return messages.map(m => `<div class="msg ${m.from === 'therapist' ? 'therapist' : 'client'}"><div class="msg-sender">${m.name || (m.from === 'therapist' ? 'You' : 'Client')}</div>${m.text}<div class="msg-time">${m.time || ''}</div></div>`).join('');
+  }
+
+  function refreshChat(id) {
+    try {
+      const sessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      const s = sessions.find(s => s.id === id);
+      if (!s) return;
+      const box = document.getElementById('chatMessages');
+      if (box) { box.innerHTML = renderMessages(s.messages || []); scrollChat(); }
+    } catch(e) {}
+  }
+
+  function sendReply() {
+    const input = document.getElementById('replyInput');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text || !currentSessionId) return;
+    input.value = '';
+    try {
+      const sessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      const idx = sessions.findIndex(s => s.id === currentSessionId);
+      if (idx > -1) {
+        sessions[idx].messages = sessions[idx].messages || [];
+        sessions[idx].messages.push({ from: 'therapist', name: 'You', text, time: new Date().toLocaleTimeString() });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+        refreshChat(currentSessionId);
+      }
+    } catch(e) {}
+  }
+
+  function replyEnter(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReply(); } }
+  function scrollChat() { const box = document.getElementById('chatMessages'); if (box) box.scrollTop = box.scrollHeight; }
+</script>
+</body>
+</html>
